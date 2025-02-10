@@ -56,12 +56,14 @@ class ReverseApp(wx.Frame):
     def on_resize(self, event):
         self.bg_image = wx.Image(self.bg_file, wx.BITMAP_TYPE_ANY).Rescale(self.GetClientSize().x, self.GetClientSize().y)
         self.Refresh()
-        event.Skip()
+        if event:
+            event.Skip()
     
     def adjust_window_size(self, event):
         self.Layout()
         self.Fit()
-        event.Skip()
+        if event:
+            event.Skip()
     
     def on_reply(self, event):
         text = self.input_text.GetValue()
@@ -89,7 +91,7 @@ class ReverseApp(wx.Frame):
         trans_text = ""
         for chunk in stream:
             trans_text += chunk['message']['content']
-            self.output_text.SetValue(trans_text)
+        self.output_text.SetValue(trans_text)
         self.adjust_window_size(None)  # 调整窗口大小
 
 def run(args):
