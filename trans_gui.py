@@ -26,17 +26,20 @@ class ReverseApp(wx.Frame):
         self.output_text = wx.TextCtrl(panel, style=wx.TE_READONLY | wx.TE_MULTILINE, size=(-1, 100))
         self.output_text.SetBackgroundColour(wx.Colour(255, 255, 255))  # 白色
         self.output_text.SetForegroundColour(wx.Colour(0, 0, 0))  # 黑色文字
-        
+        self.clear_button = wx.Button(panel, label="Clear")
         self.start_button = wx.Button(panel, label="Translate")
+        
         
         vbox.Add(input_label, flag=wx.LEFT | wx.TOP, border=10)
         vbox.Add(self.input_text, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
+        vbox.Add(self.clear_button, flag=wx.ALIGN_RIGHT, border=10)
         vbox.Add(output_label, flag=wx.LEFT | wx.TOP, border=10)
         vbox.Add(self.output_text, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
         vbox.Add(self.start_button, flag=wx.EXPAND | wx.ALL, border=10)
         
         panel.SetSizer(vbox)
         
+        self.Bind(wx.EVT_BUTTON, self.clear_box, self.clear_button)
         self.Bind(wx.EVT_BUTTON, self.on_reply, self.start_button)
         self.Bind(wx.EVT_TEXT_ENTER, self.on_reply, self.input_text)
         self.Bind(wx.EVT_SIZE, self.adjust_window_size)
@@ -93,6 +96,12 @@ class ReverseApp(wx.Frame):
             trans_text += chunk['message']['content']
         self.output_text.SetValue(trans_text)
         self.adjust_window_size(None)  # 调整窗口大小
+        
+    def clear_box(self, event):
+        self.input_text.SetValue("")
+        self.output_text.SetValue("")
+        self.adjust_window_size(None)
+        
 
 def run(args):
     app = wx.App(False)
