@@ -3,13 +3,16 @@ import argparse
 from ollama import chat
 from langid import classify
 
+from trans import reply_translation
+
 class ReverseApp(wx.Frame):
-    def __init__(self, llm_model, *args, **kw):
+    def __init__(self, args_, *args, **kw):
         super(ReverseApp, self).__init__(*args, **kw)
         
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
-        self.llm_model = llm_model
+        self.llm_model = args_.model
+        self.server = args_.server
         self.bg_file="bg.png"
         self.icon_file="icon.png"
         # 加载背景图片
@@ -70,30 +73,7 @@ class ReverseApp(wx.Frame):
     
     def on_reply(self, event):
         text = self.input_text.GetValue()
-        lang = classify(text)
-        if lang[0] == 'zh':
-            target = 'English'
-        else:
-            target = 'Chinese'
-        stream = chat(
-            model=self.llm_model,
-            messages=
-            [
-                {
-                    'role': 'system',
-                    'content': 'you are a professional and talented translator, you just reply the translated sentences.'
-                },
-                {
-                    'role': 'user', 
-                    'content': f"translate the sentence into {target}: {text}."
-                }
-            ],
-            stream=True
-            )
-        # reversed_text = text[::-1]
-        trans_text = ""
-        for chunk in stream:
-            trans_text += chunk['message']['content']
+        trans_text = reply_translation(text=text, server=self.server, model=self.llm_model)
         self.output_text.SetValue(trans_text)
         self.adjust_window_size(None)  # 调整窗口大小
         
@@ -105,13 +85,14 @@ class ReverseApp(wx.Frame):
 
 def run(args):
     app = wx.App(False)
-    frame = ReverseApp(args.model, None)
+    frame = ReverseApp(args, None)
     frame.Show()
     app.MainLoop()
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="qwen2.5",
+    parser.add_argument("--server", type=str, default="azure", help="azure(remote) or ollama(local)")
+    parser.add_argument("--model", type=str, default="gpt-4o",
                         help="choose a llm model, type 'ollama list' to see available models")
     args = parser.parse_args()
     run(args)
