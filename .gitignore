@@ -1,2 +1,5 @@
 api.txt
 __pycache__
+build
+MyTranslator
+dist
