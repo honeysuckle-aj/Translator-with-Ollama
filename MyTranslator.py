@@ -4,6 +4,7 @@ from langid import classify
 import wx
 import keyboard
 import pyperclip
+import pyautogui
 import threading
 import wx.adv
 import os
@@ -24,7 +25,7 @@ class MyTaskBarIcon(wx.adv.TaskBarIcon):
         super().__init__()
         self.frame = frame
         icon = wx.Icon("icon.ico")  # 确保你有一个 icon.ico 文件
-        self.SetIcon(icon, "Clipboard Reverser")
+        self.SetIcon(icon, "My Translator")
         self.Bind(wx.adv.EVT_TASKBAR_LEFT_DOWN, self.on_taskbar_click)
         self.Bind(wx.adv.EVT_TASKBAR_RIGHT_DOWN, self.on_taskbar_right_click)
 
@@ -86,10 +87,15 @@ class MyFrame(wx.Frame):
 
         vbox.Add(input_label, flag=wx.LEFT | wx.TOP, border=10)
         vbox.Add(self.input_text, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
-        vbox.Add(self.clear_button, flag=wx.ALIGN_RIGHT, border=10)
+        in_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        in_hbox.Add(self.start_button, flag=wx.ALL, border=10)
+        in_hbox.Add(self.clear_button, flag=wx.ALL, border=10)
+        vbox.Add(in_hbox, flag=wx.ALIGN_RIGHT, border=10)
+        # vbox.Add(self.start_button, flag=wx.EXPAND | wx.ALL, border=10)
+        # vbox.Add(self.start_button, flag=wx.ALIGN_BOTTOM, border=10)
+        # vbox.Add(self.clear_button, flag=wx.ALIGN_RIGHT, border=10)
         vbox.Add(output_label, flag=wx.LEFT | wx.TOP, border=10)
         vbox.Add(self.output_text, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
-        vbox.Add(self.start_button, flag=wx.EXPAND | wx.ALL, border=10)
 
         panel.SetSizer(vbox)
 
@@ -124,18 +130,15 @@ class MyFrame(wx.Frame):
         clipboard_content = pyperclip.paste()
         self.input_text.SetValue(clipboard_content)
 
-    def show_window_with_clip(self):
-        time.sleep(0.2)
-        keyboard.press_and_release("ctrl+c")
-        wx.CallLater(200, self.copy_and_get_clipboard_text)  # 500ms 延迟确保剪贴板更新
+    def show_window(self, copy_clipboard=False):
+        if copy_clipboard:
+            time.sleep(0.1)
+            # keyboard.press_and_release("ctrl+c")
+            pyautogui.hotkey("ctrl", "c")
+            wx.CallLater(100, self.copy_and_get_clipboard_text)  # 500ms
         self.Show()
         self.Raise()  # 确保窗口置顶
-        self.on_translate(None)
-
-    def show_window(self):
-        # self.clear_box(None)
-        self.Show()
-        self.Raise()
+        # self.on_translate(None)
 
     def on_reverse(self, event):
         text = self.input_text.GetValue()
@@ -156,16 +159,14 @@ class MyFrame(wx.Frame):
             event.Skip()
 
 
-def listen_clip_shortcut(frame):
-    while True:
-        keyboard.wait("alt+d")
-        wx.CallAfter(frame.show_window_with_clip)
-
-
 def listen_shortcut(frame):
-    while True:
-        keyboard.wait("alt+x")
-        wx.CallAfter(frame.show_window)
+    keyboard.add_hotkey(
+        "alt+x", lambda: wx.CallAfter(frame.show_window, copy_clipboard=False)
+    )
+    keyboard.add_hotkey(
+        "alt+z", lambda: wx.CallAfter(frame.show_window, copy_clipboard=True)
+    )
+    keyboard.wait()  # 让监听一直运行
 
 
 def translate(text):
@@ -196,5 +197,4 @@ if __name__ == "__main__":
     # app.SetUseHighDPI(True)
     frame = MyFrame(None, "Text Reverser")
     threading.Thread(target=listen_shortcut, args=(frame,), daemon=True).start()
-    threading.Thread(target=listen_clip_shortcut, args=(frame,), daemon=True).start()
     app.MainLoop()
